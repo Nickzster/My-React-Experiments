@@ -24,12 +24,16 @@ interface Props {
 
 const CardGrid: React.FC<Props> = props => {
   const { data } = props;
-  console.log(data[0]);
   return (
     <Grid>
       {data.map(d => {
         return (
-          <Card title={d.title} description={d.description} image={d.image} />
+          <Card
+            key={d.title}
+            title={d.title}
+            description={d.description}
+            image={d.image}
+          />
         );
       })}
     </Grid>

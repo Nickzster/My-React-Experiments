@@ -1,59 +1,66 @@
 import React, { useEffect } from 'react';
+import { fromEvent } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
+
 /* components */
 import { Container } from '../../components/Styled/Container';
-import CardGrid from '../../components/CardGrid';
+import CardGrid from '../../components/Styled/CardGrid';
+import Card from '../../components/Card';
 import Splitter from '../../components/Splitter';
-import { getSomeData } from '../../actions/getData';
 import { UserData } from '../../types/Interfaces';
 import Spinner from '../../components/Spinner';
+import data from '../../SampleData/data.json';
 /* state */
 import TestStore from '../../stores/TestStore';
-import { connect } from 'react-redux';
 
-interface Props {
-  state: {
-    getSomeData: Function;
-    users: any;
-    loading: boolean;
-  };
-}
+const scroll = fromEvent(document, 'scroll');
 
-const TestScreen: React.FC<Props> = props => {
-  const { getSomeData, users, loading } = props.state;
-  let data: any;
+const needMoreData = (containerHeight: number, currentHeight: number) => {
+  if (containerHeight - 2000 < currentHeight) return true;
+  return false;
+};
+
+const TestScreen: React.FC = () => {
+  const store = TestStore.useStore();
   useEffect(() => {
-    getSomeData();
-  });
+    if (store.get('data').length === 0) store.set('loading')(true);
+    scroll.pipe(debounceTime(200)).subscribe(() => {
+      if (needMoreData(document.body.clientHeight, window.scrollY))
+        store.set('loading')(true);
+    });
+  }, [store.get('loading')]);
   return (
     <React.Fragment>
       <Container>
         <h1>Test Screen!</h1>
       </Container>
-      <Splitter
+      {/* <Splitter
         data={{
           title: 'Click The Button!',
           description: 'Click the Button to change your life!',
           image: 'https://wallpaperplay.com/walls/full/1/e/6/78925.jpg',
           cta: 'Click Me!'
         }}
-      />
-      {loading === true && !users ? <Spinner /> : <CardGrid data={users} />}
+      /> */}
+      <hr />
+      <CardGrid>
+        {store.get('data').map(card => {
+          return (
+            <Card
+              key={card.title}
+              title={card.title}
+              description={card.description}
+              image={card.image}
+            />
+          );
+        })}
+      </CardGrid>
+      {store.get('loading') === true ? (
+        <h2 style={{ textAlign: 'center', margin: '5em 0em' }}>Loading...</h2>
+      ) : null}
+      <hr />
     </React.Fragment>
   );
 };
 
-const mapStateToProps = (state: any) => ({
-  users: state.users,
-  loading: state.loading
-});
-
-const mapStateToProps = (state: State) => ({
-  loading: state.loading,
-  users: state.users
-})
-
-const mapDispatchToProps = (dispatch: Dispatch) => ({
-  getSomeData: () => dispatch(getSomeData());
-})
-
-export default connect(mapStateToProps, mapDispatchToProps, TestScreen);
+export default TestStore.withStore(TestScreen);

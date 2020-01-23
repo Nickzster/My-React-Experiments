@@ -6,8 +6,8 @@ export const getTestData = () => {
   // }, 2000);
 };
 
-export const getUsers = (cb: Function) => {
-  fetch('https://randomuser.me/api/')
+export const getUsers = (numberOfUsers: number = 10, cb: Function) => {
+  fetch(`https://randomuser.me/api/?results=${numberOfUsers}`)
     .then(response => response.json())
-    .then(users => cb(users));
+    .then(users => cb(users.results));
 };
